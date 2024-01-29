@@ -1,0 +1,29 @@
+on: [push]
+
+jobs:
+  k6_local_test:
+    name: k6 counter extension run
+    runs-on: ubuntu-latest
+    container: docker://golang:1.17-alpine
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install xk6
+        run: go install go.k6.io/xk6/cmd/xk6@latest
+
+      - name: Build xk6-counter binary
+        run: xk6 build --with github.com/mstoykov/xk6-counter@latest
+
+      - name: Run k6 extension test
+        env:
+          K6_WEB_DASHBOARD: true
+          K6_WEB_DASHBOARD_EXPORT: test-report.html
+        run: ./k6 run extension/script.js
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: report
+          path: ./test-report.html
